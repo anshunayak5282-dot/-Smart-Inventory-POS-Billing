@@ -1316,7 +1316,6 @@
             <select id="authRoleSelect" class="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-indigo-500">
               <option value="cashier">Cashier (POS & Invoicing)</option>
               <option value="manager">Manager (Inventory & Stock)</option>
-              <option value="admin">Admin (Full Control)</option>
             </select>
           </div>
 
@@ -1326,7 +1325,7 @@
         </form>
 
         <!-- 1-Click Quick Demo Sign In -->
-        <div class="pt-4 border-t border-slate-800 text-center">
+        <div id="authDemoSection" class="pt-4 border-t border-slate-800 text-center">
           <div class="text-[11px] font-semibold uppercase text-slate-400 mb-2">⚡ Instant 1-Click Demo Login</div>
           <div class="grid grid-cols-3 gap-2">
             <button onclick="quickDemoLogin('admin')" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs flex flex-col items-center gap-0.5">
@@ -1534,18 +1533,21 @@
       const roleGrp = document.getElementById('authRegisterRoleGroup');
       const submitBtn = document.getElementById('authSubmitBtn');
 
+      const demoSec = document.getElementById('authDemoSection');
       if (mode === 'login') {
         loginTab.className = 'flex-1 py-2 font-bold rounded-lg bg-indigo-600 text-white shadow transition-all';
         regTab.className = 'flex-1 py-2 font-semibold text-slate-400 hover:text-white transition-all';
         nameGrp.classList.add('hidden');
         roleGrp.classList.add('hidden');
         submitBtn.textContent = 'Sign In to Workspace';
+        if (demoSec) demoSec.classList.remove('hidden');
       } else {
         regTab.className = 'flex-1 py-2 font-bold rounded-lg bg-indigo-600 text-white shadow transition-all';
         loginTab.className = 'flex-1 py-2 font-semibold text-slate-400 hover:text-white transition-all';
         nameGrp.classList.remove('hidden');
         roleGrp.classList.remove('hidden');
         submitBtn.textContent = 'Create & Access Account';
+        if (demoSec) demoSec.classList.add('hidden');
       }
     }
 

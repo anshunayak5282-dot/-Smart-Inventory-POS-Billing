@@ -165,11 +165,10 @@ export default function LoginPage() {
                 <label className="block text-xs font-semibold text-slate-300 mb-1.5">
                   Select User Role *
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'cashier', label: 'Cashier' },
-                    { id: 'manager', label: 'Manager' },
-                    { id: 'admin', label: 'Admin' }
+                    { id: 'manager', label: 'Manager' }
                   ].map(r => (
                     <button
                       key={r.id}
@@ -199,40 +198,42 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick 1-Click Demo Login Section */}
-          <div className="mt-6 pt-5 border-t border-slate-700/60">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2.5 text-center">
-              ⚡ Instant 1-Click Demo Access
-            </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => quickLogin('admin')}
-                className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-700 hover:border-indigo-500/50 text-slate-300 hover:text-white flex flex-col items-center gap-1 transition-all">
-                <span className="text-base">👑</span>
-                <span className="font-bold text-[11px]">Admin</span>
-                <span className="text-[9px] text-slate-500">Full Access</span>
-              </button>
+          {/* Quick 1-Click Demo Login Section (Only visible in Sign In mode, hidden in Create Account mode) */}
+          {mode === 'login' && (
+            <div className="mt-6 pt-5 border-t border-slate-700/60">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2.5 text-center">
+                ⚡ Instant 1-Click Demo Access
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => quickLogin('admin')}
+                  className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-700 hover:border-indigo-500/50 text-slate-300 hover:text-white flex flex-col items-center gap-1 transition-all">
+                  <span className="text-base">👑</span>
+                  <span className="font-bold text-[11px]">Admin</span>
+                  <span className="text-[9px] text-slate-500">Full Access</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => quickLogin('cashier')}
-                className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 hover:text-white flex flex-col items-center gap-1 transition-all">
-                <span className="text-base">💳</span>
-                <span className="font-bold text-[11px]">Cashier</span>
-                <span className="text-[9px] text-slate-500">POS Billing</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => quickLogin('cashier')}
+                  className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-700 hover:border-emerald-500/50 text-slate-300 hover:text-white flex flex-col items-center gap-1 transition-all">
+                  <span className="text-base">💳</span>
+                  <span className="font-bold text-[11px]">Cashier</span>
+                  <span className="text-[9px] text-slate-500">POS Billing</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => quickLogin('manager')}
-                className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-white flex flex-col items-center gap-1 transition-all">
-                <span className="text-base">📦</span>
-                <span className="font-bold text-[11px]">Manager</span>
-                <span className="text-[9px] text-slate-500">Inventory</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => quickLogin('manager')}
+                  className="p-2 rounded-xl bg-slate-900/70 hover:bg-slate-900 border border-slate-700 hover:border-amber-500/50 text-slate-300 hover:text-white flex flex-col items-center gap-1 transition-all">
+                  <span className="text-base">📦</span>
+                  <span className="font-bold text-[11px]">Manager</span>
+                  <span className="text-[9px] text-slate-500">Inventory</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Security badge footer */}
