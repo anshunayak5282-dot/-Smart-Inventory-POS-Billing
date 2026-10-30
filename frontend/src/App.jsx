@@ -1,15 +1,26 @@
 import React from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { InventoryProvider } from './context/InventoryContext';
 import { CartProvider } from './context/CartContext';
 import MainLayout from './layouts/MainLayout';
+import LoginPage from './pages/LoginPage';
+
+function AppContent() {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  return <MainLayout />;
+}
 
 export default function App() {
   return (
     <AuthProvider>
       <InventoryProvider>
         <CartProvider>
-          <MainLayout />
+          <AppContent />
         </CartProvider>
       </InventoryProvider>
     </AuthProvider>

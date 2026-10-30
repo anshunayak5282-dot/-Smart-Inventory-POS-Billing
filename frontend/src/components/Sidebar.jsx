@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useInventory } from '../context/InventoryContext';
 
 export default function Sidebar({ activeTab, setActiveTab }) {
-  const { role, user, switchRole } = useAuth();
+  const { role, user, switchRole, logout } = useAuth();
   const { products } = useInventory();
 
   const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
@@ -83,16 +83,26 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         })}
       </nav>
 
-      {/* User Footer */}
+      {/* User Footer with Logout */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/60">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-bold text-sm">
-            {user?.name?.slice(0, 2).toUpperCase() || 'US'}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 flex items-center justify-center font-bold text-xs flex-shrink-0">
+              {user?.name?.slice(0, 2).toUpperCase() || 'US'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-white truncate">{user?.name}</div>
+              <div className="text-[10px] text-slate-400 truncate capitalize">{role}</div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-white truncate">{user?.name}</div>
-            <div className="text-[11px] text-slate-400 truncate">{user?.email}</div>
-          </div>
+          <button
+            onClick={logout}
+            title="Log Out"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800/80 transition-colors flex-shrink-0">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
         </div>
       </div>
     </aside>

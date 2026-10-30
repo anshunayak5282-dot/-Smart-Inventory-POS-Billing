@@ -51,26 +51,25 @@ All features (POS, barcode scan, invoices, stock deductions, role switching, rep
 
 ---
 
-### Option 2: Full-Stack React + Node.js Setup
+#### 1. Database Setup (MongoDB)
+Ensure MongoDB is running locally (or copy your MongoDB Atlas connection string into `backend/.env`):
+```text
+MONGODB_URI=mongodb://127.0.0.1:27017/smart_inventory
+```
 
-#### 1. Database Setup
-1. Create a MySQL database:
-   ```sql
-   CREATE DATABASE smart_inventory;
-   ```
-2. Import `database/schema.sql` and `database/seed.sql`:
-   ```bash
-   mysql -u root -p smart_inventory < database/schema.sql
-   mysql -u root -p smart_inventory < database/seed.sql
-   ```
+To seed initial products, users, suppliers, and customers into MongoDB:
+```bash
+cd backend
+npm run seed
+```
 
 #### 2. Backend API Setup
 ```bash
 cd backend
 npm install
-cp ../.env.example .env
 npm run dev
 ```
+The server will connect to MongoDB and start on `http://localhost:5000`.
 The server will run on `http://localhost:5000`.
 
 #### 3. Frontend Setup

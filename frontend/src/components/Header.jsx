@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useInventory } from '../context/InventoryContext';
 
 export default function Header({ pageTitle, onLaunchPos }) {
-  const { role, switchRole } = useAuth();
+  const { role, user, logout } = useAuth();
   const { settings } = useInventory();
 
   return (
@@ -18,21 +18,15 @@ export default function Header({ pageTitle, onLaunchPos }) {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Role Switcher Pill */}
-        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-medium">
-          <span className="px-2 text-slate-500">Role:</span>
-          {['admin', 'cashier', 'manager'].map(r => (
-            <button
-              key={r}
-              onClick={() => switchRole(r)}
-              className={`px-2.5 py-1 rounded-lg capitalize transition-all ${
-                role === r
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}>
-              {r}
-            </button>
-          ))}
+        {/* User Info Badge (Clean & Non-editable) */}
+        <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl">
+          <div className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs">
+            {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+          </div>
+          <div className="text-left text-xs">
+            <div className="font-semibold text-slate-800 leading-tight">{user?.name || 'User'}</div>
+            <div className="text-[10px] text-slate-500 capitalize">{role}</div>
+          </div>
         </div>
 
         {/* Quick Launch POS Button */}
@@ -43,6 +37,14 @@ export default function Header({ pageTitle, onLaunchPos }) {
             <span>⚡ Launch POS (F2)</span>
           </button>
         )}
+
+        {/* Logout Button */}
+        <button
+          onClick={logout}
+          title="Sign Out"
+          className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-xl text-xs font-semibold border border-slate-200 transition-colors">
+          <span>Sign Out</span>
+        </button>
       </div>
     </header>
   );

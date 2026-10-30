@@ -20,9 +20,9 @@ export default function SettingsPage() {
       setFormData({
         name: 'Apex Retail Hypermarket',
         gst: 'GSTIN27AABCU9603R1ZM',
-        address: '452 Commerce Avenue, Silicon Tech Hub, CA 94016',
-        phone: '+1 (555) 839-2041 | billing@apexstock.com',
-        currency: '$',
+        address: 'Plot 42, Bandra Kurla Complex, Mumbai, MH 400051',
+        phone: '+91 98765 43210 | billing@apexstock.in',
+        currency: '₹',
         footer: 'Thank you for your business! Goods once sold can be returned within 7 days.'
       });
     }
@@ -32,7 +32,7 @@ export default function SettingsPage() {
     <div className="max-w-4xl bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
       <div>
         <h2 className="text-lg font-bold text-slate-900">Store Profile & Configuration</h2>
-        <p className="text-xs text-slate-500">Configure business information that appears on printed invoices.</p>
+        <p className="text-xs text-slate-500">Configure business information and currency that appear on invoices and catalogs.</p>
       </div>
 
       {savedSuccess && (
@@ -89,10 +89,10 @@ export default function SettingsPage() {
               value={formData.currency}
               onChange={e => setFormData({ ...formData, currency: e.target.value })}
               className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold">
-              <option value="$">$ (USD - Dollar)</option>
-              <option value="₹">₹ (INR - Rupee)</option>
+              <option value="₹">₹ (INR - Indian Rupee)</option>
+              <option value="$">$ (USD - US Dollar)</option>
               <option value="€">€ (EUR - Euro)</option>
-              <option value="£">£ (GBP - Pound)</option>
+              <option value="£">£ (GBP - British Pound)</option>
             </select>
           </div>
 

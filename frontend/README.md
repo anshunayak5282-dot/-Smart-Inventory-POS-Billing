@@ -24,6 +24,7 @@ frontend/
 │   ├── layouts/
 │   │   └── MainLayout.jsx       # Shell coordinating pages, header & sidebar
 │   ├── pages/
+│   │   ├── LoginPage.jsx        # Dual-mode Sign In / Sign Up with 1-click demo access
 │   │   ├── DashboardPage.jsx    # Executive metrics, SVG charts, recent invoices
 │   │   ├── POSPage.jsx          # Fast barcode scanner, catalog & register
 │   │   ├── ProductsPage.jsx     # Inventory master table, low stock alerts, CSV
