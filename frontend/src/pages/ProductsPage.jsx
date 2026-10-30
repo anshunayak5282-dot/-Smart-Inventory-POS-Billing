@@ -7,9 +7,14 @@ export default function ProductsPage({ onOpenProductModal, onOpenStockModal }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStockFilter, setSelectedStockFilter] = useState('all');
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // 10 | 25 | 50 | 'all'
 
   const categories = [...new Set(products.map(p => p.category))];
 
+  // Filtering
   const filtered = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           p.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -23,10 +28,43 @@ export default function ProductsPage({ onOpenProductModal, onOpenStockModal }) {
     return matchesSearch && matchesCategory && matchesStock;
   });
 
+  // Sorting
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortField) return 0;
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+    if (typeof aVal === 'string') {
+      aVal = aVal.toLowerCase();
+      bVal = bVal.toLowerCase();
+    }
+    if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Pagination calculations
+  const totalItems = sorted.length;
+  const isAll = pageSize === 'all';
+  const limit = isAll ? totalItems : Number(pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+  const activePage = Math.min(currentPage, totalPages);
+  const startIndex = isAll ? 0 : (activePage - 1) * limit;
+  const endIndex = isAll ? totalItems : Math.min(startIndex + limit, totalItems);
+  const displayedProducts = sorted.slice(startIndex, endIndex);
+
   const exportCSV = () => {
-    let csv = 'ID,Name,Category,SKU,Barcode,CostPrice,SellingPrice,CurrentStock,MinThreshold,Unit\n';
-    products.forEach(p => {
-      csv += `"${p.id}","${p.name}","${p.category}","${p.sku}","${p.barcode}",${p.cost},${p.price},${p.stock},${p.minStock},"${p.unit}"\n`;
+    let csv = 'S.No.,ID,Name,Category,SKU,Barcode,CostPrice,SellingPrice,CurrentStock,MinThreshold,Unit\n';
+    sorted.forEach((p, index) => {
+      csv += `${index + 1},"${p.id}","${p.name}","${p.category}","${p.sku}","${p.barcode}",${p.cost},${p.price},${p.stock},${p.minStock},"${p.unit}"\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -44,14 +82,14 @@ export default function ProductsPage({ onOpenProductModal, onOpenStockModal }) {
           <input
             type="text"
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             placeholder="Search products by title, SKU, or barcode..."
             className="flex-1 min-w-[200px] px-4 py-2 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500"
           />
 
           <select
             value={selectedCategory}
-            onChange={e => setSelectedCategory(e.target.value)}
+            onChange={e => { setSelectedCategory(e.target.value); setCurrentPage(1); }}
             className="text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl">
             <option value="all">All Categories</option>
             {categories.map(c => (
@@ -61,7 +99,7 @@ export default function ProductsPage({ onOpenProductModal, onOpenStockModal }) {
 
           <select
             value={selectedStockFilter}
-            onChange={e => setSelectedStockFilter(e.target.value)}
+            onChange={e => { setSelectedStockFilter(e.target.value); setCurrentPage(1); }}
             className="text-xs py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl">
             <option value="all">All Stock Status</option>
             <option value="low">⚠️ Low Stock (≤ Threshold)</option>
@@ -90,30 +128,70 @@ export default function ProductsPage({ onOpenProductModal, onOpenStockModal }) {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200">
               <tr>
-                <th className="py-3.5 px-4">Product Info</th>
-                <th className="py-3.5 px-4">Category</th>
+                <th className="py-3.5 px-4 w-16 text-center font-bold text-slate-500">S.No.</th>
+                <th
+                  onClick={() => handleSort('name')}
+                  className="py-3.5 px-4 cursor-pointer select-none hover:text-slate-800">
+                  <div className="flex items-center gap-1">
+                    <span>Product Info</span>
+                    <span className="text-[10px] text-slate-400">{sortField === 'name' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('category')}
+                  className="py-3.5 px-4 cursor-pointer select-none hover:text-slate-800">
+                  <div className="flex items-center gap-1">
+                    <span>Category</span>
+                    <span className="text-[10px] text-slate-400">{sortField === 'category' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
                 <th className="py-3.5 px-4">SKU / Barcode</th>
-                <th className="py-3.5 px-4">Cost Price</th>
-                <th className="py-3.5 px-4">Selling Price</th>
-                <th className="py-3.5 px-4">Current Stock</th>
+                <th
+                  onClick={() => handleSort('cost')}
+                  className="py-3.5 px-4 cursor-pointer select-none hover:text-slate-800">
+                  <div className="flex items-center gap-1">
+                    <span>Cost Price</span>
+                    <span className="text-[10px] text-slate-400">{sortField === 'cost' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('price')}
+                  className="py-3.5 px-4 cursor-pointer select-none hover:text-slate-800">
+                  <div className="flex items-center gap-1">
+                    <span>Selling Price</span>
+                    <span className="text-[10px] text-slate-400">{sortField === 'price' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort('stock')}
+                  className="py-3.5 px-4 cursor-pointer select-none hover:text-slate-800">
+                  <div className="flex items-center gap-1">
+                    <span>Current Stock</span>
+                    <span className="text-[10px] text-slate-400">{sortField === 'stock' ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}</span>
+                  </div>
+                </th>
                 <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filtered.length === 0 ? (
+              {displayedProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-8 text-slate-400">
+                  <td colSpan={9} className="text-center py-8 text-slate-400">
                     No products match your filter criteria.
                   </td>
                 </tr>
               ) : (
-                filtered.map(p => {
+                displayedProducts.map((p, idx) => {
+                  const serialNumber = startIndex + idx + 1;
                   const isLow = p.stock <= p.minStock && p.stock > 0;
                   const isOut = p.stock <= 0;
 
                   return (
-                    <tr key={p.id} className="hover:bg-slate-50">
+                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-500 text-center text-xs">
+                        {serialNumber}
+                      </td>
                       <td className="py-3 px-4">
                         <div className="font-bold text-slate-800 text-xs">{p.name}</div>
                         <div className="text-[10px] text-slate-400">ID: {p.id}</div>
@@ -173,9 +251,54 @@ export default function ProductsPage({ onOpenProductModal, onOpenStockModal }) {
             </tbody>
           </table>
         </div>
-        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
-          <span>Showing <b>{filtered.length}</b> products</span>
-          <span>Synced locally</span>
+
+        {/* Pagination & Counter Footer */}
+        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span>Showing <b>{totalItems === 0 ? 0 : startIndex + 1}–{endIndex}</b> of <b>{totalItems}</b> products</span>
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-1.5">
+              <span>Per page:</span>
+              <select
+                value={pageSize}
+                onChange={e => { setPageSize(e.target.value === 'all' ? 'all' : Number(e.target.value)); setCurrentPage(1); }}
+                className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold focus:ring-1 focus:ring-indigo-500">
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+          </div>
+
+          {!isAll && totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                disabled={activePage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">
+                &larr; Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                    activePage === page
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-100'
+                  }`}>
+                  {page}
+                </button>
+              ))}
+              <button
+                disabled={activePage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="px-2.5 py-1 rounded-lg border border-slate-300 bg-white font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed">
+                Next &rarr;
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
