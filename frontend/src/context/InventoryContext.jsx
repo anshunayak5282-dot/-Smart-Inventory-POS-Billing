@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { productService } from '../services/productService';
+import { customerService } from '../services/customerService';
+import { supplierService } from '../services/supplierService';
 import { saleService } from '../services/saleService';
 
 const InventoryContext = createContext();
@@ -183,6 +185,42 @@ export const InventoryProvider = ({ children }) => {
     return () => { isMounted = false; };
   }, []);
 
+  // Sync live customers from backend MongoDB on initial mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLiveCustomers = async () => {
+      try {
+        const res = await customerService.getAll();
+        if (isMounted && res && res.customers && Array.isArray(res.customers) && res.customers.length > 0) {
+          setCustomers(res.customers);
+          localStorage.setItem('apex_customers', JSON.stringify(res.customers));
+        }
+      } catch (err) {
+        console.warn('Backend customers offline or empty, using cached customer list:', err.message);
+      }
+    };
+    fetchLiveCustomers();
+    return () => { isMounted = false; };
+  }, []);
+
+  // Sync live suppliers from backend MongoDB on initial mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchLiveSuppliers = async () => {
+      try {
+        const res = await supplierService.getAll();
+        if (isMounted && res && res.suppliers && Array.isArray(res.suppliers) && res.suppliers.length > 0) {
+          setSuppliers(res.suppliers);
+          localStorage.setItem('apex_suppliers', JSON.stringify(res.suppliers));
+        }
+      } catch (err) {
+        console.warn('Backend suppliers offline or empty, using cached supplier list:', err.message);
+      }
+    };
+    fetchLiveSuppliers();
+    return () => { isMounted = false; };
+  }, []);
+
   // CRUD Operations synced with MongoDB
   const addProduct = async (newProd) => {
     try {
@@ -295,12 +333,65 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
-  const addCustomer = (customerData) => {
-    setCustomers(prev => [{ ...customerData, id: 'cust_' + Date.now(), totalSpent: 0, orders: 0 }, ...prev]);
+  const addCustomer = async (customerData) => {
+    try {
+      // Send directly to Node.js / Express -> MongoDB
+      const res = await customerService.create(customerData);
+      const createdCust = res.customer || {
+        ...customerData,
+        id: res.id || 'cust_' + Date.now(),
+        totalSpent: 0,
+        orders: 0
+      };
+      setCustomers(prev => [createdCust, ...prev.filter(c => c.phone !== createdCust.phone)]);
+      return { success: true, customer: createdCust };
+    } catch (err) {
+      console.warn('Could not save customer to MongoDB backend, saving locally:', err.message);
+      const localCust = { ...customerData, id: 'cust_' + Date.now(), totalSpent: 0, orders: 0 };
+      setCustomers(prev => [localCust, ...prev]);
+      return { success: false, customer: localCust, error: err.message };
+    }
   };
 
-  const addSupplier = (supplierData) => {
-    setSuppliers(prev => [{ ...supplierData, id: 'supp_' + Date.now() }, ...prev]);
+  const updateCustomer = async (id, updated) => {
+    setCustomers(prev => prev.map(c => (c.id === id || c._id === id) ? { ...c, ...updated } : c));
+    try {
+      await customerService.update(id, updated);
+    } catch (err) {
+      console.warn('Backend customer update error:', err.message);
+    }
+  };
+
+  const deleteCustomer = async (id) => {
+    setCustomers(prev => prev.filter(c => c.id !== id && c._id !== id));
+    try {
+      await customerService.delete(id);
+    } catch (err) {
+      console.warn('Backend customer deletion error:', err.message);
+    }
+  };
+
+  const addSupplier = async (supplierData) => {
+    try {
+      const res = await supplierService.create(supplierData);
+      const createdSupp = res.supplier || { ...supplierData, id: res.id || 'supp_' + Date.now() };
+      setSuppliers(prev => [createdSupp, ...prev]);
+      return { success: true, supplier: createdSupp };
+    } catch (err) {
+      console.warn('Could not save supplier to MongoDB backend, saving locally:', err.message);
+      const localSupp = { ...supplierData, id: 'supp_' + Date.now() };
+      setSuppliers(prev => [localSupp, ...prev]);
+      return { success: false, supplier: localSupp, error: err.message };
+    }
+  };
+
+  const deleteSupplier = async (id) => {
+    setSuppliers(prev => prev.filter(s => s.id !== id && s._id !== id));
+    try {
+      await supplierService.delete(id);
+    } catch (err) {
+      console.warn('Backend supplier deletion error:', err.message);
+    }
   };
 
   const completeSale = async (saleData, userRole) => {
@@ -395,7 +486,10 @@ export const InventoryProvider = ({ children }) => {
       recordStockIn,
       recordStockOut,
       addCustomer,
+      updateCustomer,
+      deleteCustomer,
       addSupplier,
+      deleteSupplier,
       completeSale,
       resetDemoData
     }}>

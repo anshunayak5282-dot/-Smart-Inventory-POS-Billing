@@ -20,9 +20,9 @@ export default function SuppliersPage({ onOpenStockModal }) {
     (s.categories && s.categories.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addSupplier(formData);
+    await addSupplier(formData);
     setFormData({ name: '', contact: '', phone: '', email: '', categories: '' });
     setIsModalOpen(false);
   };

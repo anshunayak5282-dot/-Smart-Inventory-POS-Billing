@@ -2657,15 +2657,20 @@
 
       filtered.forEach(c => {
         container.innerHTML += `
-          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                ${c.name.charAt(0)}
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative group">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                  ${c.name ? c.name.charAt(0).toUpperCase() : 'C'}
+                </div>
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm">${c.name}</h4>
+                  <div class="text-[11px] text-slate-400">${c.city || c.address || 'Standard Customer'}</div>
+                </div>
               </div>
-              <div>
-                <h4 class="font-bold text-slate-800 text-sm">${c.name}</h4>
-                <div class="text-[11px] text-slate-400">${c.city || 'Standard Customer'}</div>
-              </div>
+              <button onclick="deleteCustomer('${c.id}')" title="Delete customer" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-all text-xs">
+                🗑️
+              </button>
             </div>
             <div class="space-y-1 text-xs text-slate-600 border-t border-slate-100 pt-3">
               <div><b>Phone:</b> <span class="font-mono-code">${c.phone}</span></div>
@@ -2678,7 +2683,7 @@
               </div>
               <div class="text-right">
                 <span class="text-slate-400">Orders:</span>
-                <div class="font-bold text-slate-800">${c.orders || 0} bills</div>
+                <div class="font-bold text-slate-800">${c.orders || c.totalOrders || 0} bills</div>
               </div>
             </div>
           </div>
@@ -2696,22 +2701,60 @@
 
     function handleCustomerSubmit(event) {
       event.preventDefault();
-      const name = document.getElementById('custFormName').value;
-      const phone = document.getElementById('custFormPhone').value;
-      const email = document.getElementById('custFormEmail').value;
-      const address = document.getElementById('custFormAddress').value;
+      const name = document.getElementById('custFormName').value.trim();
+      const phone = document.getElementById('custFormPhone').value.trim();
+      const email = document.getElementById('custFormEmail').value.trim();
+      const address = document.getElementById('custFormAddress').value.trim();
+
+      if (!name || !phone) {
+        showToast('Customer name and phone are required', 'error');
+        return;
+      }
 
       const newCust = {
         id: 'cust_' + Date.now(),
-        name, phone, email, city: address, totalSpent: 0, orders: 0
+        name, phone, email, city: address, address, totalSpent: 0, orders: 0
       };
 
       customers.unshift(newCust);
       saveState();
       closeCustomerModal();
-      showToast(`Added customer profile "${name}"`, 'success');
+      showToast(`Added customer "${name}"`, 'success');
       renderCustomersTable();
       renderPosView();
+
+      // Async sync to MongoDB database
+      fetch('http://localhost:5000/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, phone, email, address, city: address })
+      }).then(r => r.json()).then(data => {
+        if (data && data.customer) {
+          const dbId = data.customer._id || data.customer.id;
+          if (dbId) {
+            newCust.id = dbId;
+            saveState();
+          }
+          showToast(`✓ Customer "${name}" saved to MongoDB database!`, 'success');
+        }
+      }).catch(err => console.warn('Backend MongoDB offline for customer sync:', err.message));
+    }
+
+    function deleteCustomer(customerId) {
+      const cust = customers.find(c => c.id === customerId);
+      if (!cust) return;
+      if (confirm(`Are you sure you want to delete customer "${cust.name}"?`)) {
+        customers = customers.filter(c => c.id !== customerId);
+        saveState();
+        renderCustomersTable();
+        renderPosView();
+        showToast(`Deleted customer "${cust.name}"`, 'info');
+
+        // Async delete from MongoDB backend
+        fetch(`http://localhost:5000/api/customers/${customerId}`, {
+          method: 'DELETE'
+        }).catch(err => console.warn('Backend offline for customer delete:', err.message));
+      }
     }
 
     // ==========================================
@@ -2940,6 +2983,33 @@
       document.getElementById('headerStoreName').textContent = storeSettings.name;
       setRole(currentRole);
       switchTab('dashboard');
+
+      // Fetch live customers from MongoDB database
+      fetch('http://localhost:5000/api/customers')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.customers && Array.isArray(data.customers) && data.customers.length > 0) {
+            customers = data.customers;
+            saveState();
+            renderCustomersTable();
+            renderPosView();
+          }
+        })
+        .catch(err => console.warn('Backend customers sync offline:', err.message));
+
+      // Fetch live products from MongoDB database
+      fetch('http://localhost:5000/api/products')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.products && Array.isArray(data.products) && data.products.length > 0) {
+            products = data.products;
+            saveState();
+            renderProductsTable();
+            renderDashboard();
+            renderPosProductGrid();
+          }
+        })
+        .catch(err => console.warn('Backend products sync offline:', err.message));
     });
   </script>
 </body>

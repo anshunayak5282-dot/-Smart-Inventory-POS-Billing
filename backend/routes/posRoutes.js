@@ -133,9 +133,20 @@ router.post('/checkout', verifyToken, authorizeRoles('admin', 'cashier'), async 
 
     // 4. Update Customer metrics if linked
     if (customerId && customerId !== 'walkin') {
-      await Customer.findByIdAndUpdate(customerId, {
-        $inc: { totalSpent: grandTotal, totalOrders: 1 }
-      });
+      try {
+        if (customerId.match(/^[0-9a-fA-F]{24}$/)) {
+          await Customer.findByIdAndUpdate(customerId, {
+            $inc: { totalSpent: grandTotal, totalOrders: 1 }
+          });
+        } else {
+          await Customer.findOneAndUpdate(
+            { $or: [{ phone: customerId }, { name: customerName }] },
+            { $inc: { totalSpent: grandTotal, totalOrders: 1 } }
+          );
+        }
+      } catch (custErr) {
+        console.warn('Could not update customer spending in DB:', custErr.message);
+      }
     }
 
     res.status(201).json({
